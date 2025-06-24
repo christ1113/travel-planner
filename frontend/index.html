@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅遊計畫製作器</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/pinia@2/dist/pinia.iife.js"></script>
+    <script src="https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- 導航欄 -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <h2>🌟 旅遊計畫</h2>
+                </div>
+                <div class="nav-menu">
+                    <button class="nav-btn" @click="currentPage = 'home'" :class="{ active: currentPage === 'home' }">
+                        🏠 首頁
+                    </button>
+                    <button class="nav-btn" @click="currentPage = 'plans'" :class="{ active: currentPage === 'plans' }">
+                        📋 我的計畫
+                    </button>
+                    <button class="nav-btn" @click="currentPage = 'planner'" :class="{ active: currentPage === 'planner' }">
+                        ✏️ 創建計畫
+                    </button>
+                    <button class="nav-btn" @click="currentPage = 'account'" :class="{ active: currentPage === 'account' }">
+                        👤 帳戶
+                    </button>
+                </div>
+                <div class="nav-auth">
+                    <button v-if="!isLoggedIn" class="btn btn-outline" @click="currentPage = 'auth'">
+                        登入
+                    </button>
+                    <button v-if="isLoggedIn" class="btn btn-outline" @click="logout">
+                        登出
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 首頁 -->
+        <div v-if="currentPage === 'home'" class="page home-page">
+            <div class="hero-section">
+                <div class="hero-content">
+                    <h1>🌸 歡迎來到旅遊計畫製作器</h1>
+                    <p>輕鬆規劃您的完美旅程，創造難忘的回憶！</p>
+                    <button class="btn btn-primary btn-lg" @click="currentPage = 'planner'">
+                        🎯 開始創建計畫
+                    </button>
+                </div>
+            </div>
+            
+            <div v-if="isLoggedIn && recentPlans.length > 0" class="recent-plans">
+                <h2>📚 最近的計畫</h2>
+                <div class="plans-grid">
+                    <div v-for="plan in recentPlans" :key="plan.id" class="plan-card" @click="loadPlan(plan.id)">
+                        <h3>{{ plan.name }}</h3>
+                        <p>{{ formatDate(plan.created) }}</p>
+                        <span class="plan-items-count">{{ plan.items.length }} 個行程</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 登入/註冊頁面 -->
+        <div v-if="currentPage === 'auth'" class="page auth-page">
+            <div class="auth-container">
+                <div class="auth-tabs">
+                    <button @click="authMode = 'login'" :class="{ active: authMode === 'login' }">登入</button>
+                    <button @click="authMode = 'register'" :class="{ active: authMode === 'register' }">註冊</button>
+                </div>
+                
+                <form @submit.prevent="handleAuth" class="auth-form">
+                    <div class="form-group">
+                        <label class="form-label">帳號</label>
+                        <input type="text" v-model="authForm.username" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">密碼</label>
+                        <input type="password" v-model="authForm.password" class="form-control" required>
+                    </div>
+                    
+                    <div v-if="authMode === 'register'" class="form-group">
+                        <label class="form-label">確認密碼</label>
+                        <input type="password" v-model="authForm.confirmPassword" class="form-control" required>
+                    </div>
+                    
+                    <div v-if="authMode === 'register'" class="form-group">
+                        <label class="form-label">電子郵件</label>
+                        <input type="email" v-model="authForm.email" class="form-control" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-full-width">
+                        {{ authMode === 'login' ? '登入' : '註冊' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 計畫製作頁面 -->
+        <div v-if="currentPage === 'planner'" class="page planner-page">
+            <div class="planner-header">
+                <div class="planner-title">
+                    <input type="text" v-model="currentPlan.name" placeholder="輸入計畫名稱" class="plan-name-input">
+                </div>
+                <div class="planner-actions">
+                    <button class="btn btn-secondary" @click="savePlan">💾 儲存</button>
+                    <button class="btn btn-secondary" @click="currentPage = 'preview'">👀 預覽</button>
+                    <button class="btn btn-primary" @click="exportToPDF">📄 匯出PDF</button>
+                </div>
+            </div>
+
+            <div class="planner-content">
+                <div class="planner-toolbar">
+                    <button class="btn btn-outline btn-sm" @click="addNewItem">➕ 新增行程</button>
+                </div>
+
+                <div class="planner-table">
+                    <div class="table-header">
+                        <div class="th">日期</div>
+                        <div class="th">時間</div>
+                        <div class="th">行程</div>
+                        <div class="th">連結</div>
+                        <div class="th">圖片</div>
+                        <div class="th">備註</div>
+                        <div class="th">操作</div>
+                    </div>
+                    
+                    <div v-for="(item, index) in currentPlan.items" :key="item.id" class="table-row">
+                        <div class="td">
+                            <input type="date" v-model="item.date" class="form-control form-control-sm">
+                        </div>
+                        <div class="td">
+                            <input type="time" v-model="item.time" class="form-control form-control-sm">
+                        </div>
+                        <div class="td">
+                            <input type="text" v-model="item.activity" class="form-control form-control-sm" placeholder="行程描述">
+                        </div>
+                        <div class="td">
+                            <div class="links-container">
+                                <div v-for="(link, linkIndex) in item.links" :key="linkIndex" class="link-item">
+                                    <input type="url" v-model="item.links[linkIndex]" class="form-control form-control-sm" placeholder="連結URL">
+                                    <button @click="removeLink(item, linkIndex)" class="btn-remove">❌</button>
+                                </div>
+                                <button @click="addLink(item)" class="btn btn-outline btn-sm">➕ 連結</button>
+                            </div>
+                        </div>
+                        <div class="td">
+                            <div class="image-upload">
+                                <input type="file" @change="handleImageUpload($event, item)" accept="image/*" multiple class="file-input">
+                                <div v-if="item.images.length > 0" class="image-preview">
+                                    <img v-for="(image, imgIndex) in item.images" :key="imgIndex" :src="image" class="preview-img">
+                                </div>
+                                <label class="btn btn-outline btn-sm">📷 上傳圖片</label>
+                            </div>
+                        </div>
+                        <div class="td">
+                            <textarea v-model="item.notes" class="form-control form-control-sm" placeholder="備註" rows="2"></textarea>
+                        </div>
+                        <div class="td">
+                            <button @click="editItem(item)" class="btn btn-secondary btn-sm">✏️ 編輯</button>
+                            <button @click="removeItem(index)" class="btn btn-outline btn-sm">🗑️ 刪除</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 預覽頁面 -->
+        <div v-if="currentPage === 'preview'" class="page preview-page">
+            <div class="preview-header">
+                <h1>{{ currentPlan.name }}</h1>
+                <div class="preview-actions">
+                    <button class="btn btn-secondary" @click="currentPage = 'planner'">📝 返回編輯</button>
+                    <button class="btn btn-primary" @click="exportToPDF">📄 匯出PDF</button>
+                </div>
+            </div>
+            
+            <div class="timeline" id="pdf-content">
+                <div v-for="item in sortedPlanItems" :key="item.id" class="timeline-item">
+                    <div class="timeline-date">
+                        {{ formatDate(item.date) }}
+                    </div>
+                    <div class="timeline-time">
+                        {{ item.time }}
+                    </div>
+                    <div class="timeline-content">
+                        <h3>{{ item.activity }}</h3>
+                        <div v-if="item.links.length > 0" class="timeline-links">
+                            <a v-for="link in item.links" :key="link" :href="link" target="_blank" class="timeline-link">
+                                🔗 {{ link }}
+                            </a>
+                        </div>
+                        <div v-if="item.images.length > 0" class="timeline-images">
+                            <img v-for="image in item.images" :key="image" :src="image" class="timeline-img">
+                        </div>
+                        <p v-if="item.notes" class="timeline-notes">{{ item.notes }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 我的計畫頁面 -->
+        <div v-if="currentPage === 'plans'" class="page plans-page">
+            <div class="plans-header">
+                <h1>📋 我的計畫</h1>
+                <button class="btn btn-primary" @click="currentPage = 'planner'">➕ 新建計畫</button>
+            </div>
+            
+            <div v-if="!isLoggedIn" class="login-prompt">
+                <h2>請先登入查看您的計畫</h2>
+                <button class="btn btn-primary" @click="currentPage = 'auth'">前往登入</button>
+            </div>
+            
+            <div v-else class="plans-grid">
+                <div v-for="plan in userPlans" :key="plan.id" class="plan-card">
+                    <h3>{{ plan.name }}</h3>
+                    <p>建立日期: {{ formatDate(plan.created) }}</p>
+                    <p>行程數量: {{ plan.items.length }}</p>
+                    <div class="plan-actions">
+                        <button @click="loadPlan(plan.id)" class="btn btn-secondary btn-sm">📝 編輯</button>
+                        <button @click="deletePlan(plan.id)" class="btn btn-outline btn-sm">🗑️ 刪除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 帳戶頁面 -->
+        <div v-if="currentPage === 'account'" class="page account-page">
+            <div v-if="!isLoggedIn" class="login-prompt">
+                <h2>請先登入查看帳戶資訊</h2>
+                <button class="btn btn-primary" @click="currentPage = 'auth'">前往登入</button>
+            </div>
+            
+            <div v-else class="account-content">
+                <h1>👤 帳戶管理</h1>
+                
+                <div class="account-section">
+                    <h2>帳戶資訊</h2>
+                    <p>帳號: {{ currentUser.username }}</p>
+                    <p>電子郵件: {{ currentUser.email }}</p>
+                </div>
+                
+                <div class="account-section">
+                    <h2>修改密碼</h2>
+                    <form @submit.prevent="changePassword" class="password-form">
+                        <div class="form-group">
+                            <label class="form-label">舊密碼</label>
+                            <input type="password" v-model="passwordForm.oldPassword" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">新密碼</label>
+                            <input type="password" v-model="passwordForm.newPassword" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">確認新密碼</label>
+                            <input type="password" v-model="passwordForm.confirmPassword" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">更新密碼</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 編輯模態視窗 -->
+        <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
+            <div class="modal-content" @click.stop>
+                <div class="modal-header">
+                    <h2>編輯行程</h2>
+                    <button @click="closeEditModal" class="btn-close">❌</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <input type="date" v-model="editingItem.date" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">時間</label>
+                        <input type="time" v-model="editingItem.time" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">行程</label>
+                        <input type="text" v-model="editingItem.activity" class="form-control" placeholder="行程描述">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">連結</label>
+                        <div v-for="(link, index) in editingItem.links" :key="index" class="link-item">
+                            <input type="url" v-model="editingItem.links[index]" class="form-control" placeholder="連結URL">
+                            <button @click="removeLink(editingItem, index)" class="btn-remove">❌</button>
+                        </div>
+                        <button @click="addLink(editingItem)" class="btn btn-outline btn-sm">➕ 新增連結</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">備註</label>
+                        <textarea v-model="editingItem.notes" class="form-control" rows="4" placeholder="備註"></textarea>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button @click="saveEditedItem" class="btn btn-primary">儲存</button>
+                    <button @click="closeEditModal" class="btn btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 通知訊息 -->
+        <div v-if="notification.show" class="notification" :class="notification.type">
+            {{ notification.message }}
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
