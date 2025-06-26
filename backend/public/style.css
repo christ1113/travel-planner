@@ -844,9 +844,14 @@ body {
 .hero-section {
   text-align: center;
   padding: var(--spacing-xl) 0;
-  background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 182, 193, 0.1));
+  background: linear-gradient(135deg,rgba(255, 107, 53, 0.1), rgba(255, 12, 19, 0.1));
   border-radius: var(--border-radius);
   margin-bottom: var(--spacing-xl);
+  margin-top: 15%;
+  height: 40vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .hero-content h1 {
