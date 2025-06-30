@@ -104,60 +104,133 @@ createApp({
     };
     
     // 認證功能
-    const handleAuth = () => {
-      if (authMode.value === 'register') {
-        if (authForm.password !== authForm.confirmPassword) {
-          showNotification('密碼不一致', 'error');
-          return;
-        }
+    // const handleAuth = () => {
+    //   if (authMode.value === 'register') {
+    //     if (authForm.password !== authForm.confirmPassword) {
+    //       showNotification('密碼不一致', 'error');
+    //       return;
+    //     }
         
-        // 檢查使用者是否已存在
-        if (users.value.find(user => user.username === authForm.username)) {
-          showNotification('使用者已存在', 'error');
-          return;
-        }
+    //     // 檢查使用者是否已存在
+    //     if (users.value.find(user => user.username === authForm.username)) {
+    //       showNotification('使用者已存在', 'error');
+    //       return;
+    //     }
         
-        // 創建新使用者
-        const newUser = {
-          id: generateId(),
-          username: authForm.username,
-          password: authForm.password,
-          email: authForm.email,
-          plans: []
-        };
+    //     // 創建新使用者
+    //     const newUser = {
+    //       id: generateId(),
+    //       username: authForm.username,
+    //       password: authForm.password,
+    //       email: authForm.email,
+    //       plans: []
+    //     };
         
-        users.value.push(newUser);
-        saveToStorage('users', users.value);
-        showNotification('註冊成功', 'success');
-        authMode.value = 'login';
+    //     users.value.push(newUser);
+    //     saveToStorage('users', users.value);
+    //     showNotification('註冊成功', 'success');
+    //     authMode.value = 'login';
         
-        // 重置表單
-        Object.keys(authForm).forEach(key => {
-          authForm[key] = '';
+    //     // 重置表單
+    //     Object.keys(authForm).forEach(key => {
+    //       authForm[key] = '';
+    //     });
+    //   } else {
+    //     // 登入
+    //     const user = users.value.find(u => 
+    //       u.username === authForm.username && u.password === authForm.password
+    //     );
+        
+    //     if (user) {
+    //       currentUser.value = user;
+    //       isLoggedIn.value = true;
+    //       loadUserPlans();
+    //       saveToStorage('currentUser', user);
+    //       showNotification('登入成功', 'success');
+    //       currentPage.value = 'home';
+          
+    //       // 重置表單
+    //       Object.keys(authForm).forEach(key => {
+    //         authForm[key] = '';
+    //       });
+    //     } else {
+    //       showNotification('帳號或密碼錯誤', 'error');
+    //     }
+    //   }
+    // };
+
+    //註冊
+    const handleRegister = async () => {
+      if (authForm.password !== authForm.confirmPassword) {
+        showNotification('密碼不一致', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:8010/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: authForm.username,
+            email: authForm.email,
+            password: authForm.password
+          })
         });
-      } else {
-        // 登入
-        const user = users.value.find(u => 
-          u.username === authForm.username && u.password === authForm.password
-        );
-        
-        if (user) {
-          currentUser.value = user;
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showNotification('註冊成功', 'success');
+          authMode.value = 'login';
+          Object.keys(authForm).forEach(key => authForm[key] = '');
+        } else {
+          showNotification('註冊失敗: ' + (data.message || ''), 'error');
+        }
+      } catch (error) {
+        showNotification('網路錯誤', 'error');
+      }
+    };
+    //登入==>待修改
+    const handleLogin = async () => {
+      try {
+        const response = await fetch('/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: authForm.username,
+            password: authForm.password
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // 假設後端回傳 user 物件
+          currentUser.value = data.user;
           isLoggedIn.value = true;
-          loadUserPlans();
-          saveToStorage('currentUser', user);
           showNotification('登入成功', 'success');
           currentPage.value = 'home';
-          
-          // 重置表單
-          Object.keys(authForm).forEach(key => {
-            authForm[key] = '';
-          });
+          Object.keys(authForm).forEach(key => authForm[key] = '');
         } else {
           showNotification('帳號或密碼錯誤', 'error');
         }
+      } catch (error) {
+        showNotification('網路錯誤', 'error');
       }
     };
+  
+  const handleAuth = async () => {
+    if (authMode.value === 'register') {
+      await handleRegister();
+    } else {
+      await handleLogin();
+    }
+  };
+
     
     const logout = () => {
       currentUser.value = null;
