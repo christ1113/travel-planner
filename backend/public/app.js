@@ -192,16 +192,16 @@ createApp({
         showNotification('網路錯誤', 'error');
       }
     };
-    //登入==>待修改
+    //登入驗證
     const handleLogin = async () => {
       try {
-        const response = await fetch('/users', {
+        const response = await fetch('http://localhost:8010/api/auth/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            username: authForm.username,
+            name: authForm.username,
             password: authForm.password
           })
         });
@@ -209,11 +209,15 @@ createApp({
         const data = await response.json();
 
         if (response.ok) {
-          // 假設後端回傳 user 物件
+          // 儲存 token
+          localStorage.setItem('token', data.token);
+
           currentUser.value = data.user;
           isLoggedIn.value = true;
+
           showNotification('登入成功', 'success');
           currentPage.value = 'home';
+
           Object.keys(authForm).forEach(key => authForm[key] = '');
         } else {
           showNotification('帳號或密碼錯誤', 'error');
