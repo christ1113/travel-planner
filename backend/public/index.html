@@ -109,7 +109,7 @@
                     <input type="text" v-model="currentPlan.name" placeholder="輸入計畫名稱" class="plan-name-input">
                 </div>
                 <div class="planner-actions">
-                    <button class="btn btn-secondary" @click="savePlan">💾 儲存</button>
+                    <button v-if="isLoggedIn" class="btn btn-secondary" @click="savePlan">💾 儲存</button>
                     <button class="btn btn-secondary" @click="currentPage = 'preview'">👀 預覽</button>
                     <button class="btn btn-primary" @click="exportToPDF">📄 匯出PDF</button>
                 </div>
@@ -242,7 +242,7 @@
                 
                 <div class="account-section">
                     <h2>帳戶資訊</h2>
-                    <p>帳號: {{ currentUser.username }}</p>
+                    <p>帳號: {{ currentUser.name }}</p>
                     <p>電子郵件: {{ currentUser.email }}</p>
                 </div>
                 

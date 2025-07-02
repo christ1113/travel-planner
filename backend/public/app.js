@@ -213,6 +213,11 @@ createApp({
           localStorage.setItem('token', data.token);
 
           currentUser.value = data.user;
+          currentUser.value = {
+            ...data.user,
+            token: data.token
+          };
+
           isLoggedIn.value = true;
 
           showNotification('登入成功', 'success');
@@ -227,13 +232,13 @@ createApp({
       }
     };
   
-  const handleAuth = async () => {
-    if (authMode.value === 'register') {
-      await handleRegister();
-    } else {
-      await handleLogin();
-    }
-  };
+    const handleAuth = async () => {
+      if (authMode.value === 'register') {
+        await handleRegister();
+      } else {
+        await handleLogin();
+      }
+    };
 
     
     const logout = () => {
@@ -317,6 +322,18 @@ createApp({
       
       // 如果使用者已登入，更新使用者的計畫列表
       if (isLoggedIn.value && currentUser.value) {
+        // fetch('http://localhost:8010/api/plan', {
+        //   method: 'POST',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //     'Authorization': `Bearer ${currentUser.value.token}`
+        //   },
+        //   body: JSON.stringify({
+        //     plan_title: currentPlan.name
+        //   })
+        // })
+        // .then(response => response.json())
+        
         if (!currentUser.value.plans.includes(currentPlan.id)) {
           currentUser.value.plans.push(currentPlan.id);
           
