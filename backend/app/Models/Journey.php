@@ -20,9 +20,14 @@ class Journey extends Model
 
     protected $casts = [
         'date' => 'date', // 轉為 Carbon 物件
-        'time' => 'datetime:H:i:s',
+        'time' => 'datetime:H:i',
         'links' => 'array',
         'created_at' => 'datetime:Y-m-d H:i:s',
         'updated_at' => 'datetime:Y-m-d H:i:s',
     ];
+    // 一個 journey 屬於一個 plan
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class, 'plan_id', 'plan_id');
+    }
 }

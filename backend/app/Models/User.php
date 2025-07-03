@@ -53,4 +53,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    //一個user可以有很多個plan
+    public function plans()
+    {
+        return $this->hasMany(Plan::class, 'user_id', 'id');
+    }
 }

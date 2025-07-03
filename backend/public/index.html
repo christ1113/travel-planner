@@ -41,7 +41,10 @@
                 </div>
             </div>
         </nav>
-
+        <!-- Loading mask -->
+        <div v-if="loading" class="loading-mask">
+            <div class="spinner"></div>
+        </div>
         <!-- 首頁 -->
         <div v-if="currentPage === 'home'" class="page home-page">
             <div class="hero-section">

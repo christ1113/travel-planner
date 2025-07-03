@@ -8,6 +8,7 @@ createApp({
     const showEditModal = ref(false);
     const isLoggedIn = ref(false);
     const currentUser = ref(null);
+    const loading = ref(false);
     
     // 表單數據
     const authForm = reactive({
@@ -102,62 +103,6 @@ createApp({
         return null;
       }
     };
-    
-    // 認證功能
-    // const handleAuth = () => {
-    //   if (authMode.value === 'register') {
-    //     if (authForm.password !== authForm.confirmPassword) {
-    //       showNotification('密碼不一致', 'error');
-    //       return;
-    //     }
-        
-    //     // 檢查使用者是否已存在
-    //     if (users.value.find(user => user.username === authForm.username)) {
-    //       showNotification('使用者已存在', 'error');
-    //       return;
-    //     }
-        
-    //     // 創建新使用者
-    //     const newUser = {
-    //       id: generateId(),
-    //       username: authForm.username,
-    //       password: authForm.password,
-    //       email: authForm.email,
-    //       plans: []
-    //     };
-        
-    //     users.value.push(newUser);
-    //     saveToStorage('users', users.value);
-    //     showNotification('註冊成功', 'success');
-    //     authMode.value = 'login';
-        
-    //     // 重置表單
-    //     Object.keys(authForm).forEach(key => {
-    //       authForm[key] = '';
-    //     });
-    //   } else {
-    //     // 登入
-    //     const user = users.value.find(u => 
-    //       u.username === authForm.username && u.password === authForm.password
-    //     );
-        
-    //     if (user) {
-    //       currentUser.value = user;
-    //       isLoggedIn.value = true;
-    //       loadUserPlans();
-    //       saveToStorage('currentUser', user);
-    //       showNotification('登入成功', 'success');
-    //       currentPage.value = 'home';
-          
-    //       // 重置表單
-    //       Object.keys(authForm).forEach(key => {
-    //         authForm[key] = '';
-    //       });
-    //     } else {
-    //       showNotification('帳號或密碼錯誤', 'error');
-    //     }
-    //   }
-    // };
 
     //註冊
     const handleRegister = async () => {
@@ -194,6 +139,8 @@ createApp({
     };
     //登入驗證
     const handleLogin = async () => {
+      loading.value = true;
+      const start = Date.now();
       try {
         const response = await fetch('http://localhost:8010/api/auth/login', {
           method: 'POST',
@@ -211,11 +158,12 @@ createApp({
         if (response.ok) {
           // 儲存 token
           localStorage.setItem('token', data.token);
-
+          
           currentUser.value = data.user;
           currentUser.value = {
             ...data.user,
-            token: data.token
+            token: data.token,
+            plans: []
           };
 
           isLoggedIn.value = true;
@@ -229,6 +177,12 @@ createApp({
         }
       } catch (error) {
         showNotification('網路錯誤', 'error');
+      } finally {
+        const elapsed = Date.now() - start;
+        const remain = 3500 - elapsed;
+        setTimeout(() => {
+          loading.value = false;
+        }, remain > 0 ? remain : 0);
       }
     };
   
@@ -290,7 +244,7 @@ createApp({
       );
     };
     
-    const savePlan = () => {
+    const savePlan = async() => {
       if (!currentPlan.name.trim()) {
         showNotification('請輸入計畫名稱', 'error');
         return;
@@ -319,36 +273,64 @@ createApp({
       }
       
       saveToStorage('plans', allPlans);
-      
       // 如果使用者已登入，更新使用者的計畫列表
       if (isLoggedIn.value && currentUser.value) {
-        // fetch('http://localhost:8010/api/plan', {
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //     'Authorization': `Bearer ${currentUser.value.token}`
-        //   },
-        //   body: JSON.stringify({
-        //     plan_title: currentPlan.name
-        //   })
-        // })
-        // .then(response => response.json())
-        
-        if (!currentUser.value.plans.includes(currentPlan.id)) {
-          currentUser.value.plans.push(currentPlan.id);
-          
-          // 更新使用者資料
-          const userIndex = users.value.findIndex(u => u.id === currentUser.value.id);
-          if (userIndex !== -1) {
-            users.value[userIndex] = currentUser.value;
-            saveToStorage('users', users.value);
-            saveToStorage('currentUser', currentUser.value);
+
+        const planName = document.querySelector('.plan-name-input').value;
+        try {
+          // 新增計畫
+          const planResponse = await fetch('http://localhost:8010/api/plan', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${currentUser.value.token}`
+            },
+            body: JSON.stringify({
+              plan_title: planName
+            })
+          });
+          if (!planResponse.ok) throw new Error('新增計畫失敗');
+          const planData = await planResponse.json();
+          const planId = planData.plan_id; // 後端回傳的 plan_id
+
+          //新增所有行程
+          for (const item of currentPlan.items) {
+            await fetch('http://localhost:8010/api/journeys', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentUser.value.token}`
+              },
+              body: JSON.stringify({
+                plan_id: planId,
+                date: item.date,
+                time: item.time,
+                journey_title: item.activity,
+                links: Array.isArray(item.links) ? item.links.filter(l => l) : [],
+                image: item.images ? item.images[0] : null,
+                notes: item.notes || null
+              })
+            });
           }
+
+          // 更新本地 plans 關聯
+          if (!currentUser.value.plans.includes(planId)) {
+            currentUser.value.plans.push(planId);
+            const userIndex = users.value.findIndex(u => u.id === currentUser.value.id);
+            if (userIndex !== -1) {
+              users.value[userIndex] = currentUser.value;
+              saveToStorage('users', users.value);
+              saveToStorage('currentUser', currentUser.value);
+            }
+          }
+          loadUserPlans();
+          showNotification('計畫與行程已同步到雲端', 'success');
+        } catch (err) {
+          showNotification('雲端儲存失敗：' + err.message, 'error');
         }
-        loadUserPlans();
+      } else {
+        showNotification('計畫已儲存', 'success');
       }
-      
-      showNotification('計畫已儲存', 'success');
     };
     
     const loadPlan = (planId) => {
@@ -624,6 +606,7 @@ createApp({
       editingItem,
       userPlans,
       notification,
+      loading,
       
       // 計算屬性
       recentPlans,

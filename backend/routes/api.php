@@ -18,7 +18,7 @@ Route::delete('/users/{id}', [UserController::class, 'destroy']);//刪除使用�
 Route::post('/auth/login', [AuthController::class, 'login']);//登入驗證
 
 //計畫API
-Route::post('/plan', [PlanController::class, 'store']);//新增計畫
+Route::middleware('auth:sanctum')->post('/plan', [PlanController::class, 'store']);//新增計畫
 
 //行程API
-Route::post('/journeys', [JourneyController::class, 'store']);//新增行程
+Route::middleware('auth:sanctum')->post('/journeys', [JourneyController::class, 'store']);//新增行程

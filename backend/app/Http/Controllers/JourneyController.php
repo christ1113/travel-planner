@@ -7,14 +7,14 @@ use App\Models\Journey;
 
 class JourneyController extends Controller
 {
-    //新增行程(POST /journey)
+    //新增行程(POST /journeys)
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'plan_id'        => 'required|integer|exists:plans,id',
+            'plan_id'        => 'required|integer|exists:plans,plan_id',
             'date'           => 'required|date',
-            'time'           => 'required|date_format:H:i:s',
-            'journey_title'  => 'required|string|max:255',
+            'time'           => 'nullable|date_format:H:i',
+            'journey_title'  => 'nullable|string|max:255',
             'links'          => 'nullable|array',
             'image'          => 'nullable|string|max:255',
             'notes'          => 'nullable|string',
@@ -32,7 +32,7 @@ class JourneyController extends Controller
             'image'          => $validated['image'] ?? null,
             'notes'          => $validated['notes'] ?? null,
         ]);
-
+        
         return response()->json($journey,201);
     }
 }
