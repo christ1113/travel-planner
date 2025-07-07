@@ -221,15 +221,27 @@
             </div>
             
             <div v-else class="plans-grid">
-                <div v-for="plan in userPlans" :key="plan.id" class="plan-card">
-                    <h3>{{ plan.name }}</h3>
-                    <p>建立日期: {{ formatDate(plan.created) }}</p>
-                    <p>行程數量: {{ plan.items.length }}</p>
-                    <div class="plan-actions">
-                        <button @click="loadPlan(plan.id)" class="btn btn-secondary btn-sm">📝 編輯</button>
-                        <button @click="deletePlan(plan.id)" class="btn btn-outline btn-sm">🗑️ 刪除</button>
-                    </div>
-                </div>
+                <table class="plans-table">
+                    <thead>
+                    <tr>
+                        <th>計畫名稱</th>
+                        <th>最後編輯日期</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="plan in userPlans" :key="index">
+                        <td>{{ plan.name }}</td>
+                        <td>{{ formatDate(plan.updated || plan.created) }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button @click="loadPlan(plan.id)" class="btn btn-secondary btn-sm">📝 編輯</button>
+                                <button @click="deletePlan(plan.id)" class="btn btn-outline btn-sm">🗑️ 刪除</button>
+                            </div>    
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 

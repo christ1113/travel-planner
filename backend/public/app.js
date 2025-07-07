@@ -137,11 +137,13 @@ createApp({
         showNotification('網路錯誤', 'error');
       }
     };
-    //登入驗證
+    
+    //登入按鈕
     const handleLogin = async () => {
       loading.value = true;
       const start = Date.now();
       try {
+        //登入驗證
         const response = await fetch('http://localhost:8010/api/auth/login', {
           method: 'POST',
           headers: {
@@ -158,8 +160,8 @@ createApp({
         if (response.ok) {
           // 儲存 token
           localStorage.setItem('token', data.token);
-          
-          currentUser.value = data.user;
+          localStorage.setItem('user', JSON.stringify(data.user));
+
           currentUser.value = {
             ...data.user,
             token: data.token,
@@ -175,9 +177,32 @@ createApp({
         } else {
           showNotification('帳號或密碼錯誤', 'error');
         }
+        //讀取計畫列表
+        const userId = data.user.id;
+        fetch(`http://localhost:8010/api/plan/${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.value.token}`
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            userPlans.value = data.map(item => ({
+              name: item.plan_title,
+              update: item.updated_at,
+              created: item.created_at
+            }));
+            console.log(userPlans);
+          })
+          .catch(error => {
+            console.error('讀取計畫失敗', error);
+          });
+        
       } catch (error) {
         showNotification('網路錯誤', 'error');
       } finally {
+        //轉圈圈動畫
         const elapsed = Date.now() - start;
         const remain = 3500 - elapsed;
         setTimeout(() => {
@@ -200,6 +225,8 @@ createApp({
       isLoggedIn.value = false;
       userPlans.value = [];
       delete storage.value.currentUser;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       showNotification('已登出', 'info');
       currentPage.value = 'home';
     };
@@ -590,6 +617,15 @@ createApp({
     // 生命週期
     onMounted(() => {
       initializeApp();
+      //登入
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      if (token) {
+        isLoggedIn.value = true;
+        if (user) {
+          currentUser.value = JSON.parse(user);
+        }
+      }
     });
     
     // 返回所有需要在模板中使用的數據和方法
