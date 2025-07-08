@@ -270,8 +270,10 @@ createApp({
         currentUser.value.plans.includes(plan.id)
       );
     };
-    
-    const savePlan = async() => {
+
+    const savePlan = [];
+    //新增計畫
+    const newPlan = async() => {
       if (!currentPlan.name.trim()) {
         showNotification('請輸入計畫名稱', 'error');
         return;
@@ -620,11 +622,43 @@ createApp({
       //登入
       const token = localStorage.getItem('token');
       const user = localStorage.getItem('user');
-      if (token) {
+      if (token && user) {
         isLoggedIn.value = true;
-        if (user) {
-          currentUser.value = JSON.parse(user);
-        }
+        currentUser.value = JSON.parse(user);
+
+        const userToken = token;
+        //讀取計畫列表
+        const userId = currentUser.value.id;
+        fetch(`http://localhost:8010/api/plan/${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          }
+        })
+          .then(response => {
+            if (response.status !== 200) {
+              // token 過期或無效，自動登出
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              isLoggedIn.value = false;
+              currentUser.value = null;
+              userPlans.value = [];
+              return;
+            }
+            return response.json();
+          })
+          .then(data => {
+            userPlans.value = data.map(item => ({
+              name: item.plan_title,
+              update: item.updated_at,
+              created: item.created_at
+            }));
+            console.log(userPlans);
+          })
+          .catch(error => {
+            console.error('讀取計畫失敗', error);
+          });
       }
     });
     
@@ -654,6 +688,7 @@ createApp({
       handleAuth,
       logout,
       changePassword,
+      newPlan,
       savePlan,
       loadPlan,
       deletePlan,

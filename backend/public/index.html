@@ -25,7 +25,7 @@
                         📋 我的計畫
                     </button>
                     <button class="nav-btn" @click="currentPage = 'planner'" :class="{ active: currentPage === 'planner' }">
-                        ✏️ 創建計畫
+                        ✏️ 計畫製作
                     </button>
                     <button class="nav-btn" @click="currentPage = 'account'" :class="{ active: currentPage === 'account' }">
                         👤 帳戶
@@ -112,6 +112,7 @@
                     <input type="text" v-model="currentPlan.name" placeholder="輸入計畫名稱" class="plan-name-input">
                 </div>
                 <div class="planner-actions">
+                    <button v-if="isLoggedIn" class="btn btn-secondary" @click="newPlan">➕ 新增</button>
                     <button v-if="isLoggedIn" class="btn btn-secondary" @click="savePlan">💾 儲存</button>
                     <button class="btn btn-secondary" @click="currentPage = 'preview'">👀 預覽</button>
                     <button class="btn btn-primary" @click="exportToPDF">📄 匯出PDF</button>
@@ -212,7 +213,7 @@
         <div v-if="currentPage === 'plans'" class="page plans-page">
             <div class="plans-header">
                 <h1>📋 我的計畫</h1>
-                <button class="btn btn-primary" @click="currentPage = 'planner'">➕ 新建計畫</button>
+                <!-- <button class="btn btn-primary" @click="currentPage = 'planner'">➕ 新建計畫</button> -->
             </div>
             
             <div v-if="!isLoggedIn" class="login-prompt">
