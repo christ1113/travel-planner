@@ -361,7 +361,8 @@ createApp({
         showNotification('計畫已儲存', 'success');
       }
     };
-    
+
+    //編輯計畫
     const loadPlan = (planId) => {
       const allPlans = loadFromStorage('plans') || [];
       const plan = allPlans.find(p => p.id === planId);
@@ -374,6 +375,7 @@ createApp({
         currentPage.value = 'planner';
       }
     };
+    
     
     const deletePlan = (planId) => {
       if (!confirm('確定要刪除這個計畫嗎？')) return;

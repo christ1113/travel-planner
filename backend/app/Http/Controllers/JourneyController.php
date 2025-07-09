@@ -35,4 +35,13 @@ class JourneyController extends Controller
         
         return response()->json($journey,201);
     }
+
+    //抓此計畫所有行程(GET /journeys/{plan_id})
+    public function index($plan_id)
+    {
+        $journeys = Journey::where('plan_id',$plan_id)->get();
+        
+        return response()->json($journeys);
+    }
+
 }
