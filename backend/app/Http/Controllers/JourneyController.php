@@ -44,4 +44,15 @@ class JourneyController extends Controller
         return response()->json($journeys);
     }
 
+    //抓此使用者所有行程(GET /journeys)
+    public function userJourneys(Request $request)
+    {
+        $user = $request->user();
+        $journeys = Journey::whereHas('plan', function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->get();
+
+        return response()->json($journeys);
+    }
+
 }

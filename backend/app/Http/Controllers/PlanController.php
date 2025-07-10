@@ -21,7 +21,7 @@ class PlanController extends Controller
 
         $plans = Plan::where('user_id', $user_id)
         ->orderBy('updated_at', 'desc')
-        ->select('plan_title', 'created_at', 'updated_at')
+        ->select('plan_id','plan_title', 'created_at', 'updated_at')
         ->get();
 
         return response()->json($plans);

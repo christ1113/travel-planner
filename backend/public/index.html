@@ -136,7 +136,7 @@
                         <div class="th">操作</div>
                     </div>
                     
-                    <div v-for="(item, index) in currentPlan.items" :key="item.id" class="table-row">
+                    <div v-for="(item, index) in currentPlanJourneys.items" :key="item.journeyId" class="table-row">
                         <div class="td">
                             <input type="date" v-model="item.date" class="form-control form-control-sm">
                         </div>
@@ -148,8 +148,8 @@
                         </div>
                         <div class="td">
                             <div class="links-container">
-                                <div v-for="(link, linkIndex) in item.links" :key="linkIndex" class="link-item">
-                                    <input type="url" v-model="item.links[linkIndex]" class="form-control form-control-sm" placeholder="連結URL">
+                                <div v-for="(link, linkIndex) in item.link" :key="linkIndex" class="link-item">
+                                    <input type="url" v-model="item.link[linkIndex]" class="form-control form-control-sm" placeholder="連結URL">
                                     <button @click="removeLink(item, linkIndex)" class="btn-remove">❌</button>
                                 </div>
                                 <button @click="addLink(item)" class="btn btn-outline btn-sm">➕ 連結</button>
@@ -168,7 +168,7 @@
                             <textarea v-model="item.notes" class="form-control form-control-sm" placeholder="備註" rows="2"></textarea>
                         </div>
                         <div class="td">
-                            <button @click="editItem(item)" class="btn btn-secondary btn-sm">✏️ 編輯</button>
+                            <!-- <button @click="editItem(item)" class="btn btn-secondary btn-sm">✏️ 編輯</button> -->
                             <button @click="removeItem(index)" class="btn btn-outline btn-sm">🗑️ 刪除</button>
                         </div>
                     </div>
@@ -187,7 +187,7 @@
             </div>
             
             <div class="timeline" id="pdf-content">
-                <div v-for="item in sortedPlanItems" :key="item.id" class="timeline-item">
+                <div v-for="item in currentPlanJourneys" :key="item.journeyId" class="timeline-item">
                     <div class="timeline-date">
                         {{ formatDate(item.date) }}
                     </div>
@@ -196,8 +196,8 @@
                     </div>
                     <div class="timeline-content">
                         <h3>{{ item.activity }}</h3>
-                        <div v-if="item.links.length > 0" class="timeline-links">
-                            <a v-for="link in item.links" :key="link" :href="link" target="_blank" class="timeline-link">
+                        <div v-if="item.link.length > 0" class="timeline-links">
+                            <a v-for="link in item.link" :key="link" :href="link" target="_blank" class="timeline-link">
                                 🔗 {{ link }}
                             </a>
                         </div>
@@ -285,7 +285,7 @@
         </div>
 
         <!-- 編輯模態視窗 -->
-        <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
+        <!-- <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
             <div class="modal-content" @click.stop>
                 <div class="modal-header">
                     <h2>編輯行程</h2>
@@ -328,7 +328,7 @@
                     <button @click="closeEditModal" class="btn btn-secondary">取消</button>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- 通知訊息 -->
         <div v-if="notification.show" class="notification" :class="notification.type">

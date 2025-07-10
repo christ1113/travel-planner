@@ -36,6 +36,12 @@ createApp({
     const userPlans = ref([]);
     const users = ref([]);
     
+    //此計畫的所有行程
+    const currentPlanJourneys = [];
+
+    //所有行程
+    const allJourneys = [];
+
     // 通知系統
     const notification = reactive({
       show: false,
@@ -189,15 +195,44 @@ createApp({
           .then(response => response.json())
           .then(data => {
             userPlans.value = data.map(item => ({
+              id: item.plan_id,
               name: item.plan_title,
               update: item.updated_at,
               created: item.created_at
             }));
-            console.log(userPlans);
+            localStorage.setItem('userPlans', JSON.stringify(userPlans.value));
           })
           .catch(error => {
             console.error('讀取計畫失敗', error);
           });
+        //讀取所有行程
+        fetch(`http://localhost:8010/api/journeys`,{
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.value.token}`
+          }
+        })
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+          allJourneys.value = data.map(item => ({
+            planId: item.plan_id,
+            journeyId: item.journey_id,
+            date: item.date,
+            time: item.time,
+            activity: item.journey_title,
+            link: item.links,
+            images: item.image,
+            notes: item.notes,
+          }));
+          localStorage.setItem('allJourneys', JSON.stringify(allJourneys.value));
+          console.log(allJourneys);
+        })
+        .catch(error => {
+          console.error('讀取行程失敗', error);
+        });
         
       } catch (error) {
         showNotification('網路錯誤', 'error');
@@ -227,6 +262,11 @@ createApp({
       delete storage.value.currentUser;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('userPlans');
+      localStorage.removeItem('allJourneys');
+      userPlans.value = [];
+      allJourneys.value = [];
+
       showNotification('已登出', 'info');
       currentPage.value = 'home';
     };
@@ -364,16 +404,19 @@ createApp({
 
     //編輯計畫
     const loadPlan = (planId) => {
-      const allPlans = loadFromStorage('plans') || [];
-      const plan = allPlans.find(p => p.id === planId);
+      currentPage.value = 'planner';
+      const userPlans = JSON.parse(localStorage.getItem('userPlans')) || [];
+      const currentPlan = userPlans.filter(plan => plan.id === planId);
+      // 從 localStorage 讀取所有行程
+      const allJourneys = JSON.parse(localStorage.getItem('allJourneys')) || [];
+      // 過濾出 planId 相符的行程
+      const matchedJourneys = allJourneys.filter(journey => journey.planId === planId);
+      // 放到 currentPlanJourneys 陣列
+      currentPlanJourneys.value = matchedJourneys;
       
-      if (plan) {
-        currentPlan.id = plan.id;
-        currentPlan.name = plan.name;
-        currentPlan.created = plan.created;
-        currentPlan.items = plan.items.map(item => ({...item}));
-        currentPage.value = 'planner';
-      }
+      // console.log(currentPlan);
+      // console.log(allJourneys);
+      console.log(currentPlanJourneys);
     };
     
     
@@ -424,10 +467,10 @@ createApp({
       }
     };
     
-    const editItem = (item) => {
-      editingItem.value = JSON.parse(JSON.stringify(item));
-      showEditModal.value = true;
-    };
+    // const editItem = (item) => {
+    //   editingItem.value = JSON.parse(JSON.stringify(item));
+    //   showEditModal.value = true;
+    // };
     
     const saveEditedItem = () => {
       if (!editingItem.value) return;
@@ -643,23 +686,57 @@ createApp({
               // token 過期或無效，自動登出
               localStorage.removeItem('token');
               localStorage.removeItem('user');
+              localStorage.removeItem('userPlans');
+              localStorage.removeItem('allJourneys');
+
               isLoggedIn.value = false;
               currentUser.value = null;
               userPlans.value = [];
+              allJourneys.value = [];
               return;
             }
             return response.json();
           })
           .then(data => {
             userPlans.value = data.map(item => ({
+              id: item.plan_id,
               name: item.plan_title,
               update: item.updated_at,
               created: item.created_at
             }));
+            localStorage.setItem('userPlans', JSON.stringify(userPlans.value));
             console.log(userPlans);
           })
           .catch(error => {
             console.error('讀取計畫失敗', error);
+          });
+        //讀取所有行程
+        fetch(`http://localhost:8010/api/journeys`,{
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          }
+        })
+        .then(response => {
+            return response.json();
+          })
+          .then(data => {
+            allJourneys.value = data.map(item => ({
+              planId: item.plan_id,
+              journeyId: item.journey_id,
+              date: item.date,
+              time: item.time,
+              activity: item.journey_title,
+              link: item.links,
+              images: item.image,
+              notes: item.notes,
+            }));
+            localStorage.setItem('allJourneys', JSON.stringify(allJourneys.value));
+            console.log(allJourneys);
+          })
+          .catch(error => {
+            console.error('讀取行程失敗', error);
           });
       }
     });
@@ -679,7 +756,9 @@ createApp({
       userPlans,
       notification,
       loading,
-      
+      allJourneys,
+      currentPlanJourneys,
+
       // 計算屬性
       recentPlans,
       sortedPlanItems,
@@ -696,7 +775,7 @@ createApp({
       deletePlan,
       addNewItem,
       removeItem,
-      editItem,
+      // editItem,
       saveEditedItem,
       closeEditModal,
       addLink,
