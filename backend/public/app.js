@@ -31,16 +31,16 @@ createApp({
       created: '',
       items: []
     });
-    
+
+    const currentPlanJourneys = ref([]);
     const editingItem = ref(null);
     const userPlans = ref([]);
     const users = ref([]);
-    
-    //此計畫的所有行程
-    const currentPlanJourneys = [];
 
     //所有行程
-    const allJourneys = [];
+    const allJourneys = reactive({
+      items: []
+    });
 
     // 通知系統
     const notification = reactive({
@@ -344,7 +344,6 @@ createApp({
       saveToStorage('plans', allPlans);
       // 如果使用者已登入，更新使用者的計畫列表
       if (isLoggedIn.value && currentUser.value) {
-
         const planName = document.querySelector('.plan-name-input').value;
         try {
           // 新增計畫
@@ -363,7 +362,7 @@ createApp({
           const planId = planData.plan_id; // 後端回傳的 plan_id
 
           //新增所有行程
-          for (const item of currentPlan.items) {
+          for (const item of currentPlanJourneys.value) {
             await fetch('http://localhost:8010/api/journeys', {
               method: 'POST',
               headers: {
@@ -402,21 +401,39 @@ createApp({
       }
     };
 
-    //編輯計畫
     const loadPlan = (planId) => {
       currentPage.value = 'planner';
-      const userPlans = JSON.parse(localStorage.getItem('userPlans')) || [];
-      const currentPlan = userPlans.filter(plan => plan.id === planId);
-      // 從 localStorage 讀取所有行程
-      const allJourneys = JSON.parse(localStorage.getItem('allJourneys')) || [];
-      // 過濾出 planId 相符的行程
-      const matchedJourneys = allJourneys.filter(journey => journey.planId === planId);
-      // 放到 currentPlanJourneys 陣列
+
+      // 清除舊資料
+      Object.assign(currentPlan, {
+        id: '',
+        name: '',
+        created: '',
+        update: ''
+      });
+      currentPlanJourneys.value = [];
+
+      //取得對應的計畫
+      const matchedPlan = userPlans.value.find(p => p.id === planId);
+      if (matchedPlan) {
+        Object.assign(currentPlan, matchedPlan);
+      }
+
+      //載入該計畫的所有行程
+      const matchedJourneys = allJourneys.value
+        .filter(j => j.planId == planId)
+        .map(j => ({
+          ...j,
+          link: Array.isArray(j.link) ? j.link : [],
+          images: Array.isArray(j.images) ? j.images : [],
+          notes: j.notes ?? ''
+        }));
+
       currentPlanJourneys.value = matchedJourneys;
-      
-      // console.log(currentPlan);
-      // console.log(allJourneys);
-      console.log(currentPlanJourneys);
+      // 偵錯印出
+      // console.log('▶️ planId:', planId);
+      // console.log('📘 currentPlan:', currentPlan);
+      // console.log('🗺 currentPlanJourneys:', currentPlanJourneys.value);
     };
     
     
@@ -451,18 +468,18 @@ createApp({
         date: today.toISOString().split('T')[0],
         time: '09:00',
         activity: '',
-        links: [''],
+        link: [''],
         images: [],
         notes: ''
       };
       
-      currentPlan.items.push(newItem);
+      currentPlanJourneys.value.push(newItem);
       showNotification('新增行程項目', 'success');
     };
     
     const removeItem = (index) => {
       if (confirm('確定要刪除這個行程嗎？')) {
-        currentPlan.items.splice(index, 1);
+        currentPlanJourneys.value.splice(index, 1);
         showNotification('行程已刪除', 'info');
       }
     };

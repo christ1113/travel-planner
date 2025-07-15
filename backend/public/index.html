@@ -136,7 +136,7 @@
                         <div class="th">操作</div>
                     </div>
                     
-                    <div v-for="(item, index) in currentPlanJourneys.items" :key="item.journeyId" class="table-row">
+                    <div v-for="(item, index) in currentPlanJourneys" :key="item.journeyId" class="table-row">
                         <div class="td">
                             <input type="date" v-model="item.date" class="form-control form-control-sm">
                         </div>
@@ -158,7 +158,7 @@
                         <div class="td">
                             <div class="image-upload">
                                 <input type="file" @change="handleImageUpload($event, item)" accept="image/*" multiple class="file-input">
-                                <div v-if="item.images.length > 0" class="image-preview">
+                                <div v-if="Array.isArray(item.images) && item.images.length > 0" class="image-preview">
                                     <img v-for="(image, imgIndex) in item.images" :key="imgIndex" :src="image" class="preview-img">
                                 </div>
                                 <label class="btn btn-outline btn-sm">📷 上傳圖片</label>
@@ -232,7 +232,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr v-for="plan in userPlans" :key="index">
+                    <tr v-for="(plan, index) in userPlans" :key="index">
                         <td>{{ plan.name }}</td>
                         <td>{{ formatDate(plan.updated || plan.created) }}</td>
                         <td>
