@@ -25,3 +25,4 @@ Route::middleware('auth:sanctum')->post('/plan', [PlanController::class, 'store'
 Route::middleware('auth:sanctum')->post('/journeys', [JourneyController::class, 'store']);//新增行程
 Route::middleware('auth:sanctum')->get('/journeys/{plan_id}', [JourneyController::class, 'index']);//抓此計畫所有行程
 Route::middleware('auth:sanctum')->get('/journeys', [JourneyController::class, 'userJourneys']);//抓此使用者所有行程
+Route::middleware('auth:sanctum')->put('/journeys/{journey_id}', [JourneyController::class, 'updateJourney']);//更新單一行程

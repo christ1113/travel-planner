@@ -311,7 +311,6 @@ createApp({
       );
     };
 
-    const savePlan = [];
     //新增計畫
     const newPlan = async() => {
       if (!currentPlan.name.trim()) {
@@ -436,7 +435,10 @@ createApp({
       // console.log('🗺 currentPlanJourneys:', currentPlanJourneys.value);
     };
     
-    
+        //儲存
+    const savePlan = [];
+
+    //刪除
     const deletePlan = (planId) => {
       if (!confirm('確定要刪除這個計畫嗎？')) return;
       

@@ -55,4 +55,34 @@ class JourneyController extends Controller
         return response()->json($journeys);
     }
 
+    //更新單一行程(PUT /journeys/{journey_id})
+    public function updateJourney(Request $request, $journey_id)
+    {
+        $journey = Journey::where('journey_id', $journey_id)->first();
+        if (!$journey) {
+            return response()->json(['message' => 'Journey not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'date'           => 'required|date',
+            'time'           => 'nullable|date_format:H:i',
+            'journey_title'  => 'nullable|string|max:255',
+            'links'          => 'nullable|array',
+            'image'          => 'nullable|string|max:255',
+            'notes'          => 'nullable|string',
+        ]);
+
+        $validated['links'] = $validated['links'] ?? [];
+
+        $journey->update([
+            'date'           => $validated['date'],
+            'time'           => $validated['time'],
+            'journey_title'  => $validated['journey_title'],
+            'links'          => $validated['links'],
+            'image'          => $validated['image'] ?? null,
+            'notes'          => $validated['notes'] ?? null,
+        ]);
+
+        return response()->json($journey, 200);
+    }
 }
