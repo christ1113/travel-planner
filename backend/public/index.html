@@ -114,7 +114,7 @@
                 <div class="planner-actions">
                     <button v-if="isLoggedIn" class="btn btn-secondary" @click="newPlan" :disabled="!!currentPlan.id">➕ 新增計畫</button>
                     <button v-if="isLoggedIn" class="btn btn-secondary" @click="deletePlan" :disabled="!currentPlan.id">❌ 刪除計畫</button>
-                    <button v-if="isLoggedIn" class="btn btn-secondary" @click="savePlan">💾 儲存</button>
+                    <button v-if="isLoggedIn" class="btn btn-secondary" @click="savePlan" :disabled="isSaving">{{ isSaving ? '儲存中...' : '💾 儲存' }}</button>
                     <button class="btn btn-secondary" @click="currentPage = 'preview'">👀 預覽</button>
                     <button class="btn btn-primary" @click="exportToPDF">📄 匯出PDF</button>
                 </div>

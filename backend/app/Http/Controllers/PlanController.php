@@ -40,4 +40,22 @@ class PlanController extends Controller
 
         return response()->json($plan,201);
     }
+    //更新計畫 (PUT /plan/{plan_id})
+    public function update(Request $request, $plan_id){
+        $plan = Plan::find($plan_id);
+        if (!$plan) {
+            return response()->json(['message' => 'Plan not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'plan_title' => 'required|string'
+        ]);
+
+        $plan->update([
+            'plan_title' => $validated['plan_title']
+        ]);
+
+        return response()->json($plan, 200);
+    }
+
 }

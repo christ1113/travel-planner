@@ -9,6 +9,7 @@ createApp({
     const isLoggedIn = ref(false);
     const currentUser = ref(null);
     const loading = ref(false);
+    const isSaving = ref(false);
     
     // 表單數據
     const authForm = reactive({
@@ -359,26 +360,27 @@ createApp({
           if (!planResponse.ok) throw new Error('新增計畫失敗');
           const planData = await planResponse.json();
           const planId = planData.plan_id; // 後端回傳的 plan_id
-
           //新增所有行程
-          for (const item of currentPlanJourneys.value) {
-            await fetch('http://localhost:8010/api/journeys', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentUser.value.token}`
-              },
-              body: JSON.stringify({
-                plan_id: planId,
-                date: item.date,
-                time: item.time,
-                journey_title: item.activity,
-                links: Array.isArray(item.links) ? item.links.filter(l => l) : [],
-                image: item.images ? item.images[0] : null,
-                notes: item.notes || null
+          await Promise.all(
+            currentPlanJourneys.value.map(item => 
+              fetch('http://localhost:8010/api/journeys', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${currentUser.value.token}`
+                },
+                body: JSON.stringify({
+                  plan_id: planId,
+                  date: item.date,
+                  time: item.time,
+                  journey_title: item.activity,
+                  links: Array.isArray(item.links) ? item.links.filter(l => l) : [],
+                  image: item.images ? item.images[0] : null,
+                  notes: item.notes || null
+                })
               })
-            });
-          }
+            )
+          );
 
           // 更新本地 plans 關聯
           if (!currentUser.value.plans.includes(planId)) {
@@ -436,7 +438,136 @@ createApp({
     };
     
         //儲存
-    const savePlan = [];
+    const savePlan = async () =>{
+      // 抓目前的currentPlan陣列更新到plans資料表(API: http://localhost:8010/api/plan/{plan_id})
+      // 抓目前的currentPlanJourneys陣列中的JourneyId存成journey_id用迴圈更新到journeys資料表(API: http://localhost:8010/api/{journey_id})
+      try {
+        isSaving.value = true;
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('未登入或 token 遺失，請重新登入');
+          isSaving.value = false;
+          return;
+        }
+
+        //更新計畫名稱
+        const planRes = await fetch(`http://localhost:8010/api/plan/${currentPlan.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            plan_title: currentPlan.name,
+          }),
+        });
+
+        if (!planRes.ok) {
+          const errMsg = await planRes.json();
+          alert('更新計畫失敗：' + (errMsg.message || planRes.statusText));
+          isSaving.value = false;
+          return;
+        }
+
+        //分辨已有行程與新增行程
+        const existingJourneys = currentPlanJourneys.value.filter(j => j.journeyId);
+        const newJourneys = currentPlanJourneys.value.filter(j => !j.journeyId);
+
+        //先更新已有行程
+        const updateResults = await Promise.all(existingJourneys.map(async (journey) => {
+          const payload = {
+            date: journey.date,
+            time: journey.time || null,
+            journey_title: journey.activity || null,
+            notes: journey.notes || null,
+            links: Array.isArray(journey.links) ? journey.links : [],
+            image: (Array.isArray(journey.images) && journey.images.length > 0)
+              ? journey.images[0]
+              : (journey.image ?? null),
+          };
+
+          const res = await fetch(`http://localhost:8010/api/journeys/${journey.journeyId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) {
+            const errMsg = await res.json();
+            return {
+              success: false,
+              journeyId: journey.journeyId,
+              message: errMsg.message || res.statusText,
+            };
+          }
+          return { success: true, journeyId: journey.journeyId };
+        }));
+
+        //再新增新行程
+        const createResults = await Promise.all(newJourneys.map(async (journey) => {
+          const payload = {
+            plan_id: currentPlan.id,
+            date: journey.date,
+            time: journey.time || null,
+            journey_title: journey.activity || null,
+            notes: journey.notes || null,
+            links: Array.isArray(journey.links) ? journey.links : [],
+            image: (Array.isArray(journey.images) && journey.images.length > 0)
+              ? journey.images[0]
+              : (journey.image ?? null),
+          };
+
+          const res = await fetch(`http://localhost:8010/api/journeys`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) {
+            const errMsg = await res.json();
+            return {
+              success: false,
+              journeyTitle: journey.activity || '無標題',
+              message: errMsg.message || res.statusText,
+            };
+          }
+          const data = await res.json();
+          // 可選擇把新的 journey_id 更新回前端資料
+          journey.journeyId = data.journey_id || data.id || null;
+          return { success: true, journeyId: journey.journeyId };
+        }));
+
+        //整合錯誤提示
+        const failedUpdates = updateResults.filter(r => !r.success);
+        const failedCreates = createResults.filter(r => !r.success);
+
+        if (failedUpdates.length > 0 || failedCreates.length > 0) {
+          let errMsg = '';
+          if (failedUpdates.length) {
+            errMsg += '更新失敗行程:\n' + failedUpdates.map(e => `ID:${e.journeyId} (${e.message})`).join('\n');
+          }
+          if (failedCreates.length) {
+            errMsg += '\n新增失敗行程:\n' + failedCreates.map(e => `${e.journeyTitle} (${e.message})`).join('\n');
+          }
+          alert(errMsg);
+          isSaving.value = false;
+          return;
+        }
+
+        alert('計畫與所有行程已全部儲存完成！');
+        isSaving.value = false;
+
+      } catch (err) {
+        alert('儲存過程發生錯誤，請稍後再試！\n' + (err.message || err));
+        isSaving.value = false;
+      }
+    };
 
     //刪除
     const deletePlan = (planId) => {
@@ -729,6 +860,11 @@ createApp({
           .catch(error => {
             console.error('讀取計畫失敗', error);
           });
+        function toYYYYMMDD(date) {
+          if (!date) return '';
+          if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+          return new Date(date).toISOString().slice(0, 10);
+        }
         //讀取所有行程
         fetch(`http://localhost:8010/api/journeys`,{
           method: 'GET',
@@ -744,7 +880,7 @@ createApp({
             allJourneys.value = data.map(item => ({
               planId: item.plan_id,
               journeyId: item.journey_id,
-              date: item.date,
+              date: toYYYYMMDD(item.date),
               time: item.time,
               activity: item.journey_title,
               link: item.links,
@@ -777,6 +913,7 @@ createApp({
       loading,
       allJourneys,
       currentPlanJourneys,
+      isSaving,
 
       // 計算屬性
       recentPlans,
