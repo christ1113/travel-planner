@@ -224,7 +224,7 @@ createApp({
             date: item.date,
             time: item.time,
             activity: item.journey_title,
-            link: item.links,
+            links: item.links,
             images: item.image,
             notes: item.notes,
           }));
@@ -425,7 +425,7 @@ createApp({
         .filter(j => j.planId == planId)
         .map(j => ({
           ...j,
-          link: Array.isArray(j.link) ? j.link : [],
+          links: Array.isArray(j.links) ? j.links : [],
           images: Array.isArray(j.images) ? j.images : [],
           notes: j.notes ?? ''
         }));
@@ -601,7 +601,7 @@ createApp({
         date: today.toISOString().split('T')[0],
         time: '09:00',
         activity: '',
-        link: [''],
+        links: [''],
         images: [],
         notes: ''
       };
@@ -648,8 +648,10 @@ createApp({
     };
     
     const removeLink = (item, index) => {
-      if (item.links && item.links.length > 1) {
+      if (item.links && item.links.length > 0) {
         item.links.splice(index, 1);
+      } else {
+        item.links[0] = '';
       }
     };
     
@@ -883,7 +885,7 @@ createApp({
               date: toYYYYMMDD(item.date),
               time: item.time,
               activity: item.journey_title,
-              link: item.links,
+              links: item.links,
               images: item.image,
               notes: item.notes,
             }));
