@@ -1212,7 +1212,7 @@ body {
   position: relative;
   padding-left: var(--spacing-xl);
 }
-.page h2 {
+.timeline h2 {
   color: var(--primary-color);
   font-size: 5rem;
 }
