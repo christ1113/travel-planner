@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Journey;
+use Illuminate\Http\JsonResponse;
 
 class JourneyController extends Controller
 {
@@ -84,5 +85,11 @@ class JourneyController extends Controller
         ]);
 
         return response()->json($journey, 200);
+    }
+    //刪除單一行程 (DELETE /journeys/{journey})
+    public function destroy(Journey $journey): JsonResponse
+    {
+        $journey->delete();
+        return response()->json(['ok' => true]);
     }
 }

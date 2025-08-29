@@ -113,7 +113,7 @@
                 </div>
                 <div class="planner-actions">
                     <button v-if="isLoggedIn" class="btn btn-secondary" @click="newPlan" :disabled="!!currentPlan.id">➕ 新增計畫</button>
-                    <button v-if="isLoggedIn" class="btn btn-secondary" @click="deletePlan" :disabled="!currentPlan.id">❌ 刪除計畫</button>
+                    <button v-if="isLoggedIn" class="btn btn-secondary" @click="deletePlan(currentPlan.id)" :disabled="!currentPlan.id">❌ 刪除計畫</button>
                     <button v-if="isLoggedIn" class="btn btn-secondary" @click="savePlan" :disabled="isSaving">{{ isSaving ? '儲存中...' : '💾 儲存' }}</button>
                     <button class="btn btn-secondary" @click="currentPage = 'preview'">👀 預覽</button>
                     <button class="btn btn-primary" @click="exportToPDF">📄 匯出PDF</button>
@@ -185,7 +185,7 @@
                     <button class="btn btn-primary" @click="exportToPDF">📄 匯出PDF</button>
                 </div>
             </div>
-            
+            <h2>{{ currentPlan.name }}</h2>
             <div class="timeline" id="pdf-content">
                 <div v-for="item in currentPlanJourneys" :key="item.journeyId" class="timeline-item">
                     <div class="timeline-date">

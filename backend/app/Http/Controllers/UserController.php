@@ -79,7 +79,7 @@ class UserController extends Controller
     }
 
     //刪除使用者 (DELETE /users/{id})
-        public function destroy($id)
+    public function destroy($id)
     {
         $user = User::find($id);
 

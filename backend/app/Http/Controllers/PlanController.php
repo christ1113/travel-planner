@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Plan;
 use App\Models\User;
+use App\Models\Journey;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+
 
 class PlanController extends Controller
 {
@@ -57,5 +61,32 @@ class PlanController extends Controller
 
         return response()->json($plan, 200);
     }
+    //刪除計畫 (DELETE /plan/{plan})
+    public function destroy(Plan $plan): JsonResponse
+    {
+        $plan->delete();
+        return response()->json(['ok' => true]);
+    }
+    //刪除不在前端清單內的行程
+    public function keepJourneys(Request $request, Plan $plan)
+    {
+        $data = $request->validate([
+            'keep_ids'   => 'array|required',
+            'keep_ids.*' => 'integer',
+        ]);
 
+        DB::transaction(function () use ($plan, $data) {
+            $ids = $data['keep_ids'];
+            Journey::where('plan_id', $plan->plan_id)
+                ->when(!empty($ids), fn($q) => $q->whereNotIn('journey_id', $ids))
+                ->delete();
+
+            // 當 keep_ids 為空陣列時，刪掉這個 plan 的所有 journeys
+            if (empty($ids)) {
+                Journey::where('plan_id', $plan->plan_id)->delete();
+            }
+        });
+
+        return response()->json(['ok' => true]);
+    }
 }

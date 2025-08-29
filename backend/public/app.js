@@ -184,6 +184,11 @@ createApp({
         } else {
           showNotification('帳號或密碼錯誤', 'error');
         }
+        function toYYYYMMDD(date) {
+          if (!date) return '';
+          if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+          return new Date(date).toISOString().slice(0, 10);
+        }
         //讀取計畫列表
         const userId = data.user.id;
         fetch(`http://localhost:8010/api/plan/${userId}`, {
@@ -221,7 +226,7 @@ createApp({
           allJourneys.value = data.map(item => ({
             planId: item.plan_id,
             journeyId: item.journey_id,
-            date: item.date,
+            date: toYYYYMMDD(item.date),
             time: item.time,
             activity: item.journey_title,
             links: item.links,
@@ -267,6 +272,13 @@ createApp({
       localStorage.removeItem('allJourneys');
       userPlans.value = [];
       allJourneys.value = [];
+      currentPlanJourneys.value = [];
+      Object.assign(currentPlan, {
+        id: '',
+        name: '新的旅遊計畫',
+        created: '',
+        update: ''
+      });
 
       showNotification('已登出', 'info');
       currentPage.value = 'home';
@@ -360,6 +372,7 @@ createApp({
           if (!planResponse.ok) throw new Error('新增計畫失敗');
           const planData = await planResponse.json();
           const planId = planData.plan_id; // 後端回傳的 plan_id
+          currentPlan.id = planId;
           //新增所有行程
           await Promise.all(
             currentPlanJourneys.value.map(item => 
@@ -542,7 +555,20 @@ createApp({
           journey.journeyId = data.journey_id || data.id || null;
           return { success: true, journeyId: journey.journeyId };
         }));
+        //刪除不在前端清單內的行程
+        const keepIds = currentPlanJourneys.value
+          .filter(j => j.journeyId)
+          .map(j => j.journeyId);
 
+        await fetch(`http://localhost:8010/api/plans/${currentPlan.id}/journeys/keep`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ keep_ids: keepIds }),
+        });
         //整合錯誤提示
         const failedUpdates = updateResults.filter(r => !r.success);
         const failedCreates = createResults.filter(r => !r.success);
@@ -570,28 +596,47 @@ createApp({
     };
 
     //刪除
-    const deletePlan = (planId) => {
+    const deletePlan = async (planId) => {
       if (!confirm('確定要刪除這個計畫嗎？')) return;
-      
-      // 從全域計畫列表刪除
-      const allPlans = loadFromStorage('plans') || [];
-      const filteredPlans = allPlans.filter(p => p.id !== planId);
-      saveToStorage('plans', filteredPlans);
-      
-      // 從使用者計畫列表刪除
-      if (currentUser.value) {
-        currentUser.value.plans = currentUser.value.plans.filter(id => id !== planId);
-        const userIndex = users.value.findIndex(u => u.id === currentUser.value.id);
-        if (userIndex !== -1) {
-          users.value[userIndex] = currentUser.value;
-          saveToStorage('users', users.value);
-          saveToStorage('currentUser', currentUser.value);
+
+      try {
+        const token = localStorage.getItem('token');
+        const userToken = token;
+        const res = await fetch(`/api/plan/${planId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!res.ok) {
+          const errMsg = await res.text().catch(() => '刪除失敗');
+          throw new Error(errMsg);
         }
-        loadUserPlans();
+
+        // 後端刪除成功，再更新前端狀態 / localStorage
+        const allPlans = loadFromStorage('plans') || [];
+        const filteredPlans = allPlans.filter(p => p.id !== planId);
+
+        if (Array.isArray(userPlans.value)) {
+          userPlans.value = userPlans.value.filter(p => (p.id ?? p.plan_id) !== planId);
+          saveToStorage('userPlans', userPlans.value);
+        }
+        currentPlanJourneys.value = [];
+        Object.assign(currentPlan, {
+          id: '',
+          name: '新的旅遊計畫',
+          created: '',
+          update: ''
+        });
+        showNotification('計畫已刪除', 'success');
+      } catch (err) {
+        console.error('刪除計畫失敗', err);
+        showNotification('刪除失敗，請稍後再試', 'error');
       }
-      
-      showNotification('計畫已刪除', 'success');
     };
+
     
     // 行程項目管理
     const addNewItem = () => {
@@ -685,7 +730,7 @@ createApp({
         return;
       }
       
-      if (currentPlan.items.length === 0) {
+      if (currentPlan.length === 0) {
         showNotification('計畫中沒有行程項目', 'error');
         return;
       }
