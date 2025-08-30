@@ -112,7 +112,7 @@
                     <input type="text" v-model="currentPlan.name" placeholder="輸入計畫名稱" class="plan-name-input">
                 </div>
                 <div class="planner-actions">
-                    <button v-if="isLoggedIn" class="btn btn-secondary" @click="newPlan" :disabled="!!currentPlan.id">➕ 新增計畫</button>
+                    <button v-if="isLoggedIn" class="btn btn-secondary" @click="newPlan" :disabled="!!currentPlan.id">上傳計畫</button>
                     <button v-if="isLoggedIn" class="btn btn-secondary" @click="deletePlan(currentPlan.id)" :disabled="!currentPlan.id">❌ 刪除計畫</button>
                     <button v-if="isLoggedIn" class="btn btn-secondary" @click="savePlan" :disabled="isSaving">{{ isSaving ? '儲存中...' : '💾 儲存' }}</button>
                     <button class="btn btn-secondary" @click="currentPage = 'preview'">👀 預覽</button>
@@ -214,7 +214,7 @@
         <div v-if="currentPage === 'plans'" class="page plans-page">
             <div class="plans-header">
                 <h1>📋 我的計畫</h1>
-                <!-- <button class="btn btn-primary" @click="currentPage = 'planner'">➕ 新建計畫</button> -->
+                <button class="btn btn-primary" @click="createNewPlan">➕ 新建計畫</button>
             </div>
             
             <div v-if="!isLoggedIn" class="login-prompt">

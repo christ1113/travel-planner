@@ -100,7 +100,12 @@
   --container-lg: 1024px;
   --container-xl: 1280px;
 }
-
+@font-face {
+  font-family: 'ThePeakFont';
+  src: url('/fonts/ThePeakFont.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
 /* Dark mode colors */
 @media (prefers-color-scheme: dark) {
   :root {
@@ -1108,7 +1113,7 @@ body {
 
 .table-header {
   display: grid;
-  grid-template-columns: 120px 130px 1fr 150px 120px 150px 120px;
+  grid-template-columns: 130px 130px 1fr 150px 120px 150px 120px;
   background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: white;
   font-weight: bold;
@@ -1122,7 +1127,7 @@ body {
 
 .table-row {
   display: grid;
-  grid-template-columns: 120px 130px 1fr 150px 120px 150px 120px;
+  grid-template-columns: 130px 130px 1fr 150px 120px 150px 120px;
   border-bottom: 1px solid var(--border-color);
   transition: var(--transition);
 }
@@ -1215,16 +1220,8 @@ body {
 .timeline h2 {
   color: var(--primary-color);
   font-size: 5rem;
-}
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: 20px;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
-  border-radius: 2px;
+  margin-bottom: 15px;
+  font-family: 'ThePeakFont', cursive;
 }
 
 .timeline-item {
@@ -1236,6 +1233,16 @@ body {
   box-shadow: 0 4px 15px var(--shadow-light);
   margin-left: var(--spacing-lg);
 }
+/* .timeline::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+  border-radius: 2px;
+} */
 
 .timeline-item::before {
   content: '🔖';
@@ -1244,8 +1251,8 @@ body {
   top: var(--spacing-lg);
   width: 40px;
   height: 40px;
-  background:white;
-  border: 1px solid black;
+  background:rgb(0, 0, 0);
+  border: 2px solid rgb(255, 0, 0);
   border-radius: 50%;
   display: flex;
   align-items: center;

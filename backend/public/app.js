@@ -260,7 +260,7 @@ createApp({
       }
     };
 
-    
+
     const logout = () => {
       currentUser.value = null;
       isLoggedIn.value = false;
@@ -846,10 +846,13 @@ createApp({
     
     // 新建計畫
     const createNewPlan = () => {
-      currentPlan.id = '';
-      currentPlan.name = '新的旅遊計畫';
-      currentPlan.created = '';
-      currentPlan.items = [];
+      currentPlanJourneys.value = [];
+      Object.assign(currentPlan, {
+        id: '',
+        name: '新的旅遊計畫',
+        created: '',
+        update: ''
+      });
       currentPage.value = 'planner';
     };
     
