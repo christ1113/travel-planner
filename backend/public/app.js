@@ -119,7 +119,7 @@ createApp({
       }
 
       try {
-        const response = await fetch('http://localhost:8010/api/users', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -151,7 +151,7 @@ createApp({
       const start = Date.now();
       try {
         //登入驗證
-        const response = await fetch('http://localhost:8010/api/auth/login', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -191,7 +191,7 @@ createApp({
         }
         //讀取計畫列表
         const userId = data.user.id;
-        fetch(`http://localhost:8010/api/plan/${userId}`, {
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/api/plan/${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -212,7 +212,7 @@ createApp({
             console.error('讀取計畫失敗', error);
           });
         //讀取所有行程
-        fetch(`http://localhost:8010/api/journeys`,{
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/api/journeys`,{
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -359,7 +359,7 @@ createApp({
         const planName = document.querySelector('.plan-name-input').value;
         try {
           // 新增計畫
-          const planResponse = await fetch('http://localhost:8010/api/plan', {
+          const planResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/plan`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -376,7 +376,7 @@ createApp({
           //新增所有行程
           await Promise.all(
             currentPlanJourneys.value.map(item => 
-              fetch('http://localhost:8010/api/journeys', {
+              fetch(`${import.meta.env.VITE_API_BASE_URL}/api/journeys`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -464,7 +464,7 @@ createApp({
         }
 
         //更新計畫名稱
-        const planRes = await fetch(`http://localhost:8010/api/plan/${currentPlan.id}`, {
+        const planRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/plan/${currentPlan.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -499,7 +499,7 @@ createApp({
               : (journey.image ?? null),
           };
 
-          const res = await fetch(`http://localhost:8010/api/journeys/${journey.journeyId}`, {
+          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/journeys/${journey.journeyId}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -533,7 +533,7 @@ createApp({
               : (journey.image ?? null),
           };
 
-          const res = await fetch(`http://localhost:8010/api/journeys`, {
+          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/journeys`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -560,7 +560,7 @@ createApp({
           .filter(j => j.journeyId)
           .map(j => j.journeyId);
 
-        await fetch(`http://localhost:8010/api/plans/${currentPlan.id}/journeys/keep`, {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/plans/${currentPlan.id}/journeys/keep`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -602,7 +602,7 @@ createApp({
       try {
         const token = localStorage.getItem('token');
         const userToken = token;
-        const res = await fetch(`/api/plan/${planId}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/plan/${planId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${userToken}`,
@@ -874,7 +874,7 @@ createApp({
         const userToken = token;
         //讀取計畫列表
         const userId = currentUser.value.id;
-        fetch(`http://localhost:8010/api/plan/${userId}`, {
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/api/plan/${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -916,7 +916,7 @@ createApp({
           return new Date(date).toISOString().slice(0, 10);
         }
         //讀取所有行程
-        fetch(`http://localhost:8010/api/journeys`,{
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/api/journeys`,{
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
