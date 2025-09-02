@@ -4,7 +4,7 @@ createApp({
   setup() {
     // 虛擬機IP
     // http://localhost:8010
-    const API_BASE_URL = 'http://35.212.176.179:8010';
+    const API_BASE_URL = 'http://10.138.0.2:8010';
     // 響應式數據
     const currentPage = ref('home');
     const authMode = ref('login');
