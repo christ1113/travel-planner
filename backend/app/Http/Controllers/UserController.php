@@ -53,29 +53,26 @@ class UserController extends Controller
     {
         $user = User::find($id);
 
-        if(!$user){
+        if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
 
+        // 驗證輸入的欄位
         $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $id,
-            'password' => 'sometimes|min:8'
+            'old_password' => 'required',
+            'new_password' => 'required|min:8|confirmed', // 這裡使用confirmed，前端須傳入new_password_confirmation
         ]);
 
-        if (isset($validated['name'])) {
-            $user->name = $validated['name'];
-        }
-        if (isset($validated['email'])) {
-            $user->email = $validated['email'];
-        }
-        if (isset($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
+        // 比對舊密碼是否正確
+        if (!Hash::check($validated['old_password'], $user->password)) {
+            return response()->json(['message' => 'The old password is incorrect'], 400);
         }
 
+        // 更新密碼，並加密
+        $user->password = Hash::make($validated['new_password']);
         $user->save();
 
-        return response()->json($user);
+        return response()->json(['message' => 'Password updated successfully']);
     }
 
     //刪除使用者 (DELETE /users/{id})

@@ -1245,14 +1245,13 @@ body {
 } */
 
 .timeline-item::before {
-  content: '🔖';
+  content: '🧳';
   position: absolute;
   left: -50px;
   top: var(--spacing-lg);
   width: 40px;
   height: 40px;
-  background:rgb(0, 0, 0);
-  border: 2px solid rgb(255, 0, 0);
+  background:rgb(147, 205, 251);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1263,13 +1262,13 @@ body {
 
 .timeline-date {
   font-weight: bold;
-  color: var(--primary-color);
+  color: black;
   font-size: 1.1rem;
   margin-bottom: var(--spacing-xs);
 }
 
 .timeline-time {
-  color: var(--secondary-color);
+  color: #b1b1b1;
   font-weight: 500;
   margin-bottom: var(--spacing-sm);
 }

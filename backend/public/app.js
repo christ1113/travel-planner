@@ -3,8 +3,8 @@ const { createApp, reactive, ref, computed, onMounted, nextTick } = Vue;
 createApp({
   setup() {
     // 虛擬機IP
-    // http://localhost:8010
-    const API_BASE_URL = 'http://10.138.0.2:8010';
+    // http://10.138.0.2:8010
+    const API_BASE_URL = 'http://localhost:8010';
     // 響應式數據
     const currentPage = ref('home');
     const authMode = ref('login');
@@ -54,10 +54,10 @@ createApp({
     });
     
     // 計算屬性
-    const recentPlans = computed(() => {
-      if (!isLoggedIn.value) return [];
-      return userPlans.value.slice(0, 3);
-    });
+    // const recentPlans = computed(() => {
+    //   if (!isLoggedIn.value) return [];
+    //   return userPlans.value.slice(0, 3);
+    // });
     
     const sortedPlanItems = computed(() => {
       return [...currentPlan.items].sort((a, b) => {
@@ -287,34 +287,41 @@ createApp({
       currentPage.value = 'home';
     };
     
-    const changePassword = () => {
+    // 修改密碼
+    const changePassword = async () => {
       if (!currentUser.value) return;
-      
-      if (passwordForm.oldPassword !== currentUser.value.password) {
-        showNotification('舊密碼錯誤', 'error');
-        return;
-      }
-      
+
       if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-        showNotification('新密碼不一致', 'error');
+        showNotification('新密碼與確認密碼不一致', 'error');
         return;
       }
-      
-      // 更新密碼
-      currentUser.value.password = passwordForm.newPassword;
-      const userIndex = users.value.findIndex(u => u.id === currentUser.value.id);
-      if (userIndex !== -1) {
-        users.value[userIndex] = currentUser.value;
-        saveToStorage('users', users.value);
-        saveToStorage('currentUser', currentUser.value);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users/${currentUser.value.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.value.token} `
+          },
+          body: JSON.stringify({
+            old_password: passwordForm.oldPassword,
+            new_password: passwordForm.newPassword,
+            new_password_confirmation: passwordForm.confirmPassword
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || '更新失敗');
+        }
+
+        const data = await response.json();
+        showNotification('密碼已更新', 'success');
+        Object.keys(passwordForm).forEach(key => passwordForm[key] = '');
+
+      } catch (error) {
+        showNotification(error.message || '更新失敗', 'error');
       }
-      
-      showNotification('密碼已更新', 'success');
-      
-      // 重置表單
-      Object.keys(passwordForm).forEach(key => {
-        passwordForm[key] = '';
-      });
     };
     
     // 計畫管理功能
@@ -807,44 +814,44 @@ createApp({
       }
       
       // 載入範例計畫（首次使用）
-      const existingPlans = loadFromStorage('plans');
-      if (!existingPlans || existingPlans.length === 0) {
-        const samplePlan = {
-          id: "plan001",
-          name: "京都三日遊",
-          created: "2023-06-01",
-          items: [
-            {
-              id: "item001",
-              date: "2023-07-15",
-              time: "09:00",
-              activity: "參觀清水寺",
-              links: ["https://www.kiyomizudera.or.jp/"],
-              images: [],
-              notes: "記得早點去避開人潮"
-            },
-            {
-              id: "item002", 
-              date: "2023-07-15",
-              time: "14:00",
-              activity: "漫步祇園區",
-              links: ["https://www.japan-guide.com/e/e3901.html"],
-              images: [],
-              notes: "可能遇到藝妓"
-            },
-            {
-              id: "item003",
-              date: "2023-07-16", 
-              time: "10:00",
-              activity: "金閣寺",
-              links: ["https://www.shokoku-ji.jp/k_about.html"],
-              images: [],
-              notes: "最佳拍照時間"
-            }
-          ]
-        };
-        saveToStorage('plans', [samplePlan]);
-      }
+      // const existingPlans = loadFromStorage('plans');
+      // if (!existingPlans || existingPlans.length === 0) {
+      //   const samplePlan = {
+      //     id: "plan001",
+      //     name: "京都三日遊",
+      //     created: "2023-06-01",
+      //     items: [
+      //       {
+      //         id: "item001",
+      //         date: "2023-07-15",
+      //         time: "09:00",
+      //         activity: "參觀清水寺",
+      //         links: ["https://www.kiyomizudera.or.jp/"],
+      //         images: [],
+      //         notes: "記得早點去避開人潮"
+      //       },
+      //       {
+      //         id: "item002", 
+      //         date: "2023-07-15",
+      //         time: "14:00",
+      //         activity: "漫步祇園區",
+      //         links: ["https://www.japan-guide.com/e/e3901.html"],
+      //         images: [],
+      //         notes: "可能遇到藝妓"
+      //       },
+      //       {
+      //         id: "item003",
+      //         date: "2023-07-16", 
+      //         time: "10:00",
+      //         activity: "金閣寺",
+      //         links: ["https://www.shokoku-ji.jp/k_about.html"],
+      //         images: [],
+      //         notes: "最佳拍照時間"
+      //       }
+      //     ]
+      //   };
+      //   saveToStorage('plans', [samplePlan]);
+      // }
     };
     
     // 新建計畫
@@ -969,7 +976,7 @@ createApp({
       isSaving,
 
       // 計算屬性
-      recentPlans,
+      // recentPlans,
       sortedPlanItems,
       
       // 方法

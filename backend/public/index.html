@@ -57,7 +57,7 @@
                 </div>
             </div>
             
-            <div v-if="isLoggedIn && recentPlans.length > 0" class="recent-plans">
+            <!-- <div v-if="isLoggedIn && recentPlans.length > 0" class="recent-plans">
                 <h2>📚 最近的計畫</h2>
                 <div class="plans-grid">
                     <div v-for="plan in recentPlans" :key="plan.id" class="plan-card" @click="loadPlan(plan.id)">
@@ -66,7 +66,7 @@
                         <span class="plan-items-count">{{ plan.items.length }} 個行程</span>
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
 
         <!-- 登入/註冊頁面 -->
@@ -187,7 +187,7 @@
             </div>
             <div class="timeline" id="pdf-content">
                 <h2>{{ currentPlan.name }}</h2>
-                <div v-for="item in currentPlanJourneys" :key="item.journeyId" class="timeline-item">
+                <div v-for="item in currentPlanJourneys" :key="item.journeyId" class="timeline-item" style="border: 2px solid #F7931E;">
                     <div class="timeline-date">
                         {{ formatDate(item.date) }}
                     </div>
@@ -338,4 +338,9 @@
 
     <script src="app.js"></script>
 </body>
+<script>
+    setTimeout(function() {
+        location.reload();
+    }, 3600000);
+</script>
 </html>
